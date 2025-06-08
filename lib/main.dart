@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
-import 'view/splash_screen.dart';
-import 'view/welcome_screen.dart';
-import 'view/login_screen.dart';
-import 'view/create_account_screen.dart';
-import 'view/home_screen.dart';
-import 'view/movie_details_screen.dart';
-import 'view/bookmark_screen.dart';
-import 'view/watchlist_screen.dart';
-import 'view/search_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+import 'screens/splash/splash_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyDq9Tvtfh6HepUpmz088dhyoGdXz13R7ag",
+      appId: "1:1011696242795:android:9fd9876c6293307245612e",
+      messagingSenderId: "1011696242795",
+      projectId: 'centralogic-c4d4a',
+    ),
+  );
   runApp(const MainApp());
 }
 
@@ -25,18 +28,7 @@ class MainApp extends StatelessWidget {
         primarySwatch: Colors.yellow,
         fontFamily: 'Roboto',
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/welcome': (context) => WelcomeScreen(),
-        '/login': (context) => LoginScreen(),
-        '/create-account': (context) => CreateAccountScreen(),
-        '/home': (context) => HomeScreen(),
-        '/details': (context) => MovieDetailsScreen(),
-        '/bookmarks': (context) => BookmarkScreen(),
-        '/watchlist': (context) => WatchlistScreen(),
-        '/search': (context) => SearchScreen(),
-      },
+      home: const SplashScreen(),
     );
   }
 }
