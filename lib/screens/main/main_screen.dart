@@ -1,40 +1,40 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
+import 'package:flutter_svg/svg.dart';
 import '../../blocs/movie/movie_bloc.dart';
 import '../../blocs/movie/movie_event.dart';
 import '../../blocs/movie/movie_state.dart';
 import '../../models/movie_model.dart';
+import '../favourites/favourites_screen.dart';
+import '../home/home_screen.dart';
 import '../movie_detail/movie_detail_screen.dart';
+import '../watchlist/watchlist_screen.dart';
+import '../profile/profile_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class MainScreen extends StatefulWidget {
+  
+  const MainScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  List<MovieModel> _allMovies = [];
-  List<MovieModel> _filteredMovies = [];
+class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadMovies();
-  }
+  static const List<Widget> _screens = [
+    HomeScreen(),
+    WatchlistScreen(),
+    FavoritesScreen(),
+    ProfileScreen(),
+  ];
 
-  Future<void> _loadMovies() async {
-    final String response = await rootBundle.loadString('assets/movies.json');
-    final List<dynamic> data = json.decode(response);
-    final List<MovieModel> movies =
-        data.map((json) => MovieModel.fromJson(json)).toList();
+  void _onItemTapped(int index) {
     setState(() {
-      _allMovies = movies;
-      _filteredMovies = movies;
+      _selectedIndex = index;
     });
   }
 
@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.black,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          
           bool isLargeScreen = constraints.maxWidth > 800;
           
           if (isLargeScreen) {
@@ -63,29 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
         // Sidebar
         Container(
           width: 250,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [
-              Color.fromRGBO(212, 175, 55, 1),
-              Color.fromRGBO(110, 91, 29, 1)
-              
-            ])
-          ),
+          color: const Color(0xFFFFB000), // Amber color
           child: Column(
             children: [
-              // Logo section
-              Container(
-                padding: const EdgeInsets.all(20),
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'LOGO',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              
+              SvgPicture.asset("assets/svg/logo.svg",height: 200,),
               // Navigation items
               Expanded(
                 child: Column(
@@ -93,25 +73,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildNavItem(Icons.home, 'Home', 0),
                     _buildNavItem(Icons.video_library, 'Watchlist', 1),
                     _buildNavItem(Icons.bookmark, 'Bookmarks', 2),
-                    _buildNavItem(Icons.download, 'Downloads', 3),
+                    _buildNavItem(Icons.person, 'Profile', 3),
                     const Spacer(),
-                    _buildNavItem(Icons.settings, 'Settings', 4),
+                    
                     const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-              
-              // Layout section at bottom
-              Container(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.grid_view, color: Colors.black54, size: 20),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Layout',
-                      style: TextStyle(color: Colors.black54, fontSize: 14),
-                    ),
                   ],
                 ),
               ),
@@ -121,15 +86,83 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Main content
         Expanded(
-          child: _buildMainContent(isWeb: true),
+          child: SafeArea(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _screens.map((screen) {
+                
+                if (screen is HomeScreen) {
+                  return HomeScreenContent(isWeb: true);
+                } else {
+                  return screen;
+                }
+              }).toList(),
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildMobileLayout() {
-    return SafeArea(
-      child: _buildMainContent(isWeb: false),
+    return Column(
+      children: [
+        Expanded(
+          child: SafeArea(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _screens.map((screen) {
+                // Pass the mobile layout flag to screens that need it
+                if (screen is HomeScreen) {
+                  return HomeScreenContent(isWeb: false);
+                } else {
+                  return screen;
+                }
+              }).toList(),
+            ),
+          ),
+        ),
+        Container(
+          decoration: const BoxDecoration(
+            color: Colors.amber,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: _onItemTapped,
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: Colors.black,
+            unselectedItemColor: Colors.black,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.movie_outlined),
+                activeIcon: Icon(Icons.movie),
+                label: 'Watchlist',
+              ),
+              BottomNavigationBarItem(
+                activeIcon: Icon(Icons.bookmark),
+                icon: Icon(Icons.bookmark_outline),
+                label: 'Bookmark',
+              ),
+              BottomNavigationBarItem(
+                activeIcon: Icon(Icons.person),
+                icon: Icon(Icons.person_outline),
+                label: 'Profile',
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -164,8 +197,41 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
 
-  Widget _buildMainContent({required bool isWeb}) {
+// Create a separate widget for HomeScreen content that can be used in both layouts
+class HomeScreenContent extends StatefulWidget {
+  final bool isWeb;
+  
+  const HomeScreenContent({super.key, required this.isWeb});
+
+  @override
+  State<HomeScreenContent> createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends State<HomeScreenContent> {
+  List<MovieModel> _allMovies = [];
+  List<MovieModel> _filteredMovies = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMovies();
+  }
+
+  Future<void> _loadMovies() async {
+    final String response = await rootBundle.loadString('assets/movies.json');
+    final List<dynamic> data = json.decode(response);
+    final List<MovieModel> movies =
+        data.map((json) => MovieModel.fromJson(json)).toList();
+    setState(() {
+      _allMovies = movies;
+      _filteredMovies = movies;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         // Top search bar
@@ -204,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Icon(Icons.notifications, color: Colors.black),
               ),
-              if (isWeb) ...[
+              if (widget.isWeb) ...[
                 const SizedBox(width: 12),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -253,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 );
                               },
                               child: Container(
-                                height: isWeb ? 300 : 200,
+                                height: widget.isWeb ? 300 : 200,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   image: DecorationImage(
@@ -283,11 +349,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                           state.filteredMovies[0].title,
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: isWeb ? 36 : 24,
+                                            fontSize: widget.isWeb ? 36 : 24,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        if (isWeb) ...[
+                                        if (widget.isWeb) ...[
                                           const SizedBox(height: 12),
                                           Row(
                                             children: [
@@ -350,10 +416,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       sliver: SliverGrid(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isWeb ? 6 : 3,
+                          crossAxisCount: widget.isWeb ? 6 : 3,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: isWeb ? 0.7 : 0.6,
+                          childAspectRatio: widget.isWeb ? 0.7 : 0.6,
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
@@ -397,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           movie.title,
                                           style: TextStyle(
                                             color: Colors.white,
-                                            fontSize: isWeb ? 14 : 12,
+                                            fontSize: widget.isWeb ? 14 : 12,
                                             fontWeight: FontWeight.bold,
                                           ),
                                           maxLines: 2,
@@ -408,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           movie.genre,
                                           style: TextStyle(
                                             color: Colors.grey[400],
-                                            fontSize: isWeb ? 12 : 10,
+                                            fontSize: widget.isWeb ? 12 : 10,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
