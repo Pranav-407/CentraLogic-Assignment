@@ -1,3 +1,5 @@
+import 'package:centralogic_assignment/screens/auth/login_screen.dart';
+import 'package:centralogic_assignment/screens/welcome/welcome_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -41,9 +43,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
 
         if (mounted) {
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
           );
         }
       } on FirebaseAuthException catch (e) {
